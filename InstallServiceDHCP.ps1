@@ -1,4 +1,4 @@
-﻿    # 1. SÉCURITÉ : Vérification des privilèges Administrateur
+    # 1. SÉCURITÉ : Vérification des privilèges Administrateur
     if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
         Write-Host "ERREUR : Ce script doit impérativement être exécuté en tant qu'Administrateur !" -ForegroundColor Red
         return
@@ -48,8 +48,16 @@
         Write-Host "Le serveur a été autorisé dans l'Active Directory." -ForegroundColor Green
     }
 
-    # 4. CONFIGURATION DE L'ÉTENDUE (POOL)
-    while($DHCPpool -eq $True){
+    # 4. Finalisation post déploiement DHCP - drapeau d'avertissement
+    Write-Host("---- Finalisation post-déploiement DHCP ----") -ForegroundColor
+    Add-DhcpServerSecurityGroup -ComputerName $env:COMPUTERNAME -ErrorAction SilentlyContinue | Out-Null
+    Restart-Service -Name dhcpserver -Force
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\ServerManager\Roles\12" -Name "ConfigurationState" -Value 2
+    Write-Host("---- Le drapeau d'avertissement du Gestionnaire de serveur a été retiré ----") -ForegroundColor Cyan
+
+    # 5. CONFIGURATION DE L'ÉTENDUE (POOL)
+
+    :BouclePool while($True){
     $DHCPpool = Read-Host "Souhaitez vous installé des pools DHCP ? Y/N"
 
     switch ($DHCPpool) {
@@ -58,7 +66,7 @@
             # Ajout de .Trim() pour nettoyer les espaces accidentels de la saisie
             $name = (Read-Host "Quel nom souhaitez-vous donner à votre pool ?").Trim()
             $IpNet = (Read-Host "Quelle IP réseau (ScopeId) souhaitez-vous donner à votre pool ?").Trim()
-            $IpMask = (Read-Host "Quel Masque de sous-réseau souhaitez-vous donner à votre pool ?").Trim()
+            $IpMask = (Read-Host "Quel Masque de sous-réseau souhaitez-vous donner à votre pool (ex: 255.255.255.0)?").Trim()
             $IpStart = (Read-Host "Quelle est la première IP distribuable du pool ?").Trim()
             $IpEnd = (Read-Host "Quelle est la dernière IP distribuable de votre pool ?").Trim()
             $IpGateway = (Read-Host "Quelle est l'IP de la passerelle (routeur) ?").Trim()
@@ -121,12 +129,14 @@
         }
         "N" {
             Write-Host "---- Fin de la configuration ----" -ForegroundColor Green
-            break
+            break BouclePool
         }
 
         Default {
             Write-Host"---- Erreur de saisie ----" -ForegroundColor Red
             Write-Host"Veuillez choisir Y/N seulement"
+            break
         }
+
     }
     }
