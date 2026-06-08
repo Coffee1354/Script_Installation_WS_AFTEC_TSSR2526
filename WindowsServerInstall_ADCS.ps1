@@ -34,12 +34,19 @@ try {
 
     Write-Host("`n---- Export du Certificat Public pour GLPI ----") -ForegroundColor Cyan
     $ExportPath = "$HOME\Deskpop\Certificat_lDAPS_$CAName.cer"
+    Write-Host("Attente de l'initialisation complète du service de certification...") -ForegroundColor Cyan
+    Start-Sleep -Seconds 5
 
     certutil -ca.cert $ExportPath | Out-Null
+    Start-Sleep -Seconds 1
+
     if(Test-Path $ExportPath){
         Write-Host(" Certificat public exporté avec succès !") -ForegroundColor Green
         Write-Host("Vous trouverez le fichier ici : $ExportPath") -ForegroundColor Yellow
         Write-Host("Il suffira d'importer ce fichier (.cer) dans la configuration de votre serveur GLPI") -ForegroundColor DarkGray
+    }else{
+        Write-Host("Le fichier n'a pas été généré automatiquement ") -ForegroundColor Yellow
+        Write-Host("Une fois le serveur stabilisé, vous pourrez tapper manuellement : certutil -ca.cert '$ExportPath' ") -ForegroundColor DarkGray
     }
 
     Write-Host ("`n===========================================================") -ForegroundColor Green
