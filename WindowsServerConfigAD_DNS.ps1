@@ -131,7 +131,7 @@ function New-InteractiveDNSRecord {
     Write-Host("`n---- Assistant de configuration DNS Dynamique ----") -ForegroundColor Cyan
 
     while($true){
-        $AliasName = (Read-Host("Nom du nouvel enregistrement (Laissez vide pour quitter) (ex: deb-srv, glpi)")).trim()
+        $RecordName = (Read-Host("Nom du nouvel enregistrement (Laissez vide pour quitter) (ex: deb-srv, glpi)")).trim()
     
         if([string]::IsNullOrEmpty($AliasName)){
             break
