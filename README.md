@@ -1,15 +1,18 @@
-**Télécharger le zip :**
-Invoke-WebRequest -Uri "https://github.com/Coffee1354/Script_Installation_WS_AFTEC_TSSR2526/archive/refs/heads/main.zip" -OutFile "$HOME\Desktop\scripts.zip"
+**Copier/Coller ce bloc dans powershell en tant qu'admin**
 
-**Unzip sur votre bureau**
-Expand-Archive -Path "$HOME\Desktop\scripts.zip" -DestinationPath "$HOME\Desktop\Provisioning"
-
-**Forcer la lecture via UTF8**
+```powershell
+# Étape A : Téléchargement et extraction des sources
+Invoke-WebRequest -Uri "[https://github.com/Coffee1354/Script_Installation_WS_AFTEC_TSSR2526/archive/refs/heads/main.zip](https://github.com/Coffee1354/Script_Installation_WS_AFTEC_TSSR2526/archive/refs/heads/main.zip)" -OutFile "$HOME\Desktop\scripts.zip"
+Expand-Archive -Path "$HOME\Desktop\scripts.zip" -DestinationPath "$HOME\Desktop\Provisioning" -Force
+# Étape B : Correction automatique de l'encodage pour la console Windows
 Get-ChildItem -Path "$HOME\Desktop\Provisioning\Script_Installation_WS_AFTEC_TSSR2526-main\*.ps1" | ForEach-Object {
     $Contenu = Get-Content $_.FullName -Encoding UTF8
     Set-Content $_.FullName -Value $Contenu -Encoding UTF8
 }
+# Étape C : Déplacement dans le dossier pour exécution
+cd "$HOME\Desktop\Provisioning\Script_Installation_WS_AFTEC_TSSR2526-main\"
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ##  ÉTAPE 0 : Préparation de la VM et Transfert (CRUCIAL)
 
 **ATTENTION : Ne lancez AUCUN script tant que la VM est connectée au réseau physique de l'entreprise. Le script installera un serveur DHCP qui pourrait couper l'accès Internet de vos collègues.**
