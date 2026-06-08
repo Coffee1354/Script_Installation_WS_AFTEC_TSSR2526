@@ -33,21 +33,22 @@ try {
     Write-Host("---- Autorité de Certification installée et LDAPS activé ----") -ForegroundColor Green
 
     Write-Host("`n---- Export du Certificat Public pour GLPI ----") -ForegroundColor Cyan
-    $ExportPath = "$HOME\Deskpop\Certificat_lDAPS_$CAName.cer"
+    $ExportPath = "$HOME\Deskpop\Certificat_LDAPS_$CAName.cer"
     Write-Host("Attente de l'initialisation complète du service de certification...") -ForegroundColor Cyan
     Start-Sleep -Seconds 5
 
-    certutil -ca.cert $ExportPath | Out-Null
-    Start-Sleep -Seconds 1
+    Start-Service CertSvc -ErrorAction SilentlyContinue
+    $VraiCertificat = Get-ChildItem Cert:\LocalMachine\My | Where-Objet { $_.Subject -like "*CN=$CAName*" } | Select-Object -First 1
+    
+   if($VraiCertificat){
+        Export-Certificate -Cert $VraiCertificat -FilePath $ExportPath | Out-Null
 
-    if(Test-Path $ExportPath){
-        Write-Host(" Certificat public exporté avec succès !") -ForegroundColor Green
+        Write-Host("---- Certificat public exporté avec succès ----") -ForegroundColor Green
         Write-Host("Vous trouverez le fichier ici : $ExportPath") -ForegroundColor Yellow
-        Write-Host("Il suffira d'importer ce fichier (.cer) dans la configuration de votre serveur GLPI") -ForegroundColor DarkGray
-    }else{
-        Write-Host("Le fichier n'a pas été généré automatiquement ") -ForegroundColor Yellow
-        Write-Host("Une fois le serveur stabilisé, vous pourrez tapper manuellement : certutil -ca.cert '$ExportPath' ") -ForegroundColor DarkGray
-    }
+        Write-Host("Il suffira d'importer ce fichier (.cer) dans la configuration de votre serveur GLPI.") -ForegroundColor Yellow
+   }else{
+        Write-Host("ERREUR : Impossible de trouver le certificat de l'autorité '$CAName' dans le magasin local.") -ForegroundColor Red
+   }
 
     Write-Host ("`n===========================================================") -ForegroundColor Green
     Write-Host (" DÉPLOIEMENT AD CS TERMINÉ ! ") -ForegroundColor Green
