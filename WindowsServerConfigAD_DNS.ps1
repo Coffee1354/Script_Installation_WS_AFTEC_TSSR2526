@@ -31,7 +31,7 @@ function CreateOU{
                 Write-Host "---- Descente dans le dossier $ouName ----" -ForegroundColor Magenta
                 
                 # La fonction s'appelle elle-même, mais en donnant le nouveau chemin en paramètre !
-                New-InteractiveOU -ParentPath $newOuPath
+                CreateOU -ParentPath $newOuPath
                 
                 Write-Host "---- Remontée au dossier précédent ----" -ForegroundColor Magenta
             }
@@ -122,34 +122,56 @@ function New-InteractiveUser {
     }
 }
 
-function New-InteractiveCNAME {
+function New-InteractiveDNSRecord {
     param(
-        [parameter(Mandatory=$true)]
-        [string]$ZoneName,  #Correspond au nom de ton domaine (ex: my.domain)
-
         [Parameter(Mandatory=$true)]
-        [string]$TargetFQDN #Correspond au nom complet du serveur cible (ex WIN-SRV.my.domain)
+        [string]$ZoneName # Ton domaine (ex: tp.aftec)
     )
 
-    Write-Host("`n---- Assistant de configuration DNS (Alias CNAME) ----") -ForegroundColor Cyan
+    Write-Host("`n---- Assistant de configuration DNS Dynamique ----") -ForegroundColor Cyan
 
     while($true){
-        $AliasName = (Read-Host("Quel Alias (CNAME) voulez-vous créer ? (Laissez vide pour quitter)")).trim()
+        $AliasName = (Read-Host("Nom du nouvel enregistrement (Laissez vide pour quitter) (ex: deb-srv, glpi)")).trim()
     
         if([string]::IsNullOrEmpty($AliasName)){
             break
         }
 
-        try {
-            if(-not(Get-DnsServerResourceRecord -ZoneName $ZoneName -Name $AliasName -ErrorAction SilentlyContinue)){
-                Write-Host("---- Création de l'alias '$AliasName' pointant vers $TargetFQDN ----") -ForegroundColor Cyan
-                Add-DnsServerResourceRecordCName -Name $AliasName -HostNameAlias $TargetFQDN -ZoneName $ZoneName -ErrorAction Stop
-                Write-Host("---- Alias DNS $AliasName.$ZoneName créé avec succès ----") -ForegroundColor Green
-            }else{
-                Write-Host("Un enregistrement DNS nommé '$AliasName' existe déjà dans la zone $ZoneName.") -ForegroundColor Yellow
+        # On demande le type pour savoir s'il faut lier à une IP ou à un Nom
+        $Type = (Read-Host ("Quel type d'enregistrement ? (A = Vers une IP | CNAME = Vers un autre Nom)")).Trim().ToUpper()
+
+        if ($Type -eq "A") {
+            $TargetIP = (Read-Host ("Entrez l'adresse IP cible (ex: 10.0.0.195)")).Trim()
+            
+            try {
+                # Vérifie si l'enregistrement existe déjà
+                if (-not (Get-DnsServerResourceRecord -ZoneName $ZoneName -Name $RecordName -RRType A -ErrorAction SilentlyContinue)) {
+                    Add-DnsServerResourceRecordA -Name $RecordName -IPv4Address $TargetIP -ZoneName $ZoneName -ErrorAction Stop
+                    Write-Host (" Enregistrement A créé : $RecordName.$ZoneName -> $TargetIP") -ForegroundColor Green
+                } else {
+                    Write-Host (" Un enregistrement A nommé '$RecordName' existe déjà.") -ForegroundColor Yellow
+                }
+            } catch {
+                Write-Host ("Erreur lors de la création de l'enregistrement A : $($_.Exception.Message)") -ForegroundColor Red
             }
-        }catch{
-            Write-Host("---- Erreur lors de la création de l'alias : $($_.Exception.Message)") -ForegroundColor Red
+        }
+        elseif ($Type -eq "CNAME") {
+            $TargetFQDN = (Read-Host ("Entrez le nom du serveur cible (ex: deb-srv.my.domain ou google.fr)")).Trim()
+            
+            try {
+                # Vérifie si l'alias existe déjà
+                if (-not (Get-DnsServerResourceRecord -ZoneName $ZoneName -Name $RecordName -RRType CName -ErrorAction SilentlyContinue)) {
+                    Add-DnsServerResourceRecordCName -Name $RecordName -HostNameAlias $TargetFQDN -ZoneName $ZoneName -ErrorAction Stop
+                    Write-Host (" Alias CNAME créé : $RecordName.$ZoneName -> $TargetFQDN") -ForegroundColor Green
+                } else {
+                    Write-Host (" Un alias CNAME nommé '$RecordName' existe déjà.") -ForegroundColor Yellow
+                }
+            } catch {
+                Write-Host (" Erreur lors de la création du CNAME : $($_.Exception.Message)") -ForegroundColor Red
+            }
+        }
+        else {
+            Write-Host (" Choix invalide. Vous devez taper 'A' ou 'CNAME'.") -ForegroundColor Red
         }
 
         Write-Host("------------------------------------------------") -ForegroundColor Cyan
@@ -212,10 +234,12 @@ try {
     New-InteractiveUser -DomainName $Domain.Name -RootDSE $RootDSE
     Write-Host("---- Gestion des utilisateurs terminée ----") -ForegroundColor Green
 
+
     Write-Host("`n---- Configuration DNS (Enregistrement CNAME) ----") -ForegroundColor Cyan
-    # Récupération automatique des informations si tu ne les as pas déjà en variables globales
-    New-InteractiveCNAME -ZoneName $Domain.Name -TargetFQDN $ServerFQDN
+    # Appel de la nouvelle fonction universelle
+    New-InteractiveDNSRecord -ZoneName $Domain.DNSRoot
     Write-Host("---- Gestion des alias DNS terminée ----") -ForegroundColor Green
+
 
     # Optionnel mais recommandé : On autorise le DHCP créé à la Phase 1 dans l'Active Directory
     Write-Host("`n---- Autorisation DHCP dans l'AD ----") -ForegroundColor Cyan
