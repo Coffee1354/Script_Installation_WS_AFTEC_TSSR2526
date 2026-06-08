@@ -133,7 +133,7 @@ function New-InteractiveDNSRecord {
     while($true){
         $RecordName = (Read-Host("Nom du nouvel enregistrement (Laissez vide pour quitter) (ex: deb-srv, glpi)")).trim()
     
-        if([string]::IsNullOrEmpty($AliasName)){
+        if([string]::IsNullOrEmpty($RecordName)){
             break
         }
 
