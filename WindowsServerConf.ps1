@@ -19,7 +19,7 @@ Write-Host("Carte détectée : $NetCard ")
 while($True){
     $Hostname = (Read-Host("1. Veuillez définir un Nom pour ce Serveur")).Trim()
     $IpStatique = (Read-Host("2. Veuillez choisir un IP statique pour ce Serveur")).Trim()
-    $IpMask = (Read-Host("3. Quel est le masque de sous réseau de l'adresse statique (noté /24 ou autre)")).Trim()
+    $IpMask = (Read-Host "3. Quel est le masque de sous réseau de l'adresse statique (ex: 24 ou 27)").Trim().Replace("/", "")
     $IpGateway = (Read-Host("Quelle est l'IP de la passerelle ?")).Trim()
     $DNSPrim = (Read-Host("Veuillez choisir le DNS primaire de ce Serveur (Recommandée : 127.0.0.1 en cas de service AD DS ou DNS)")).Trim()
 
