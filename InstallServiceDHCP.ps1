@@ -49,7 +49,7 @@
     }
 
     # 4. Finalisation post déploiement DHCP - drapeau d'avertissement
-    Write-Host("---- Finalisation post-déploiement DHCP ----") -ForegroundColor
+    Write-Host("---- Finalisation post-déploiement DHCP ----") -ForegroundColor Cyan
     Add-DhcpServerSecurityGroup -ComputerName $env:COMPUTERNAME -ErrorAction SilentlyContinue | Out-Null
     Restart-Service -Name dhcpserver -Force
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\ServerManager\Roles\12" -Name "ConfigurationState" -Value 2
