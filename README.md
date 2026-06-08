@@ -65,6 +65,9 @@ L'ordre d'exécution est strictement séquentiel en raison des redémarrages né
   * **Autorise officiellement le serveur DHCP** dans l'Active Directory.
 * **Résultat :** L'infrastructure est 100% opérationnelle et prête à l'emploi.
 
+### 5 Étape 5 : Certificat LDAP pour GLPI
+**Script :** `WindowsServerInstall_ADCS.ps1`
+* **Action :** * Installe le service Active Directory Certificat et envoie le .cer sur le bureau afin de le rendre accessible pour l'envoyer vers le serveur GLPI.
 ---
 
 ##  Dépannage courant
